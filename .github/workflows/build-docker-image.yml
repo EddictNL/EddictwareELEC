@@ -28,7 +28,7 @@ env:
 jobs:
   build:
 #    runs-on: github
-    runs-on: self-hosted
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
     steps:

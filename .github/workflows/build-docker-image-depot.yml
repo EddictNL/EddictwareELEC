@@ -21,7 +21,7 @@ env:
 
 jobs:
   build:
-    runs-on: depot-ubuntu-24.04-16
+    runs-on: blacksmith-16vcpu-ubuntu-2404
     # Permissions to use OIDC token authentication
     permissions:
       contents: read

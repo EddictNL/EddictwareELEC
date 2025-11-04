@@ -14,7 +14,7 @@ env:
 
 jobs:
   daily:
-    runs-on: ubuntu-latest #ubuntu-latest self-hosted
+    runs-on: blacksmith-4vcpu-ubuntu-2404 #blacksmith-4vcpu-ubuntu-2404 self-hosted
     if: github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
     # if: 0 == 1
     steps:
@@ -42,7 +42,7 @@ jobs:
           echo "Cleanup completed."
 
   every-two-hours:
-    runs-on: ubuntu-latest #ubuntu-latest self-hosted
+    runs-on: blacksmith-4vcpu-ubuntu-2404 #blacksmith-4vcpu-ubuntu-2404 self-hosted
     if: github.event.schedule == '0 */2 * * *' || github.event_name == 'workflow_dispatch'
     # if: 0 == 1
     steps:

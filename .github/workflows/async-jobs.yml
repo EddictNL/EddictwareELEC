@@ -9,7 +9,7 @@ env:
 jobs:
   async-test:
     name: Async Test
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-32vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v5
 
