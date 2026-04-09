@@ -3,13 +3,13 @@
 
 PKG_NAME="Python3"
 # When changing PKG_VERSION remember to sync PKG_PYTHON_VERSION!
-PKG_VERSION="3.14.3"
-PKG_SHA256="a97d5549e9ad81fe17159ed02c68774ad5d266c72f8d9a0b5a9c371fe85d902b"
+PKG_VERSION="3.14.4"
+PKG_SHA256="d923c51303e38e249136fc1bdf3568d56ecb03214efdef48516176d3d7faaef8"
 PKG_LICENSE="OSS"
 PKG_SITE="https://www.python.org/"
 PKG_URL="https://www.python.org/ftp/python/${PKG_VERSION}/${PKG_NAME::-1}-${PKG_VERSION}.tar.xz"
-PKG_DEPENDS_HOST="zlib:host bzip2:host libffi:host util-linux:host autoconf-archive:host openssl:host"
-PKG_DEPENDS_TARGET="autotools:host gcc:host Python3:host sqlite expat zlib bzip2 xz openssl libffi readline ncurses util-linux"
+PKG_DEPENDS_HOST="zlib:host bzip2:host libffi:host mpdecimal:host util-linux:host autoconf-archive:host openssl:host"
+PKG_DEPENDS_TARGET="autotools:host gcc:host Python3:host sqlite expat zlib bzip2 xz openssl libffi readline mpdecimal ncurses util-linux"
 PKG_LONGDESC="Python3 is an interpreted object-oriented programming language."
 PKG_BUILD_FLAGS="-cfg-libs -cfg-libs:host"
 PKG_TOOLCHAIN="autotools"
