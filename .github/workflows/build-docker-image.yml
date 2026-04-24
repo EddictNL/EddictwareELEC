@@ -10,6 +10,7 @@ on:
         options:
           - github
           - self-hosted
+          - arc-runner-set
           - gitea
         default: github
       environment:
@@ -25,6 +26,7 @@ on:
           - plucky
           - questing
           - sid
+          - actions-runner
         default: noble
   # deployment:
   push:
@@ -39,7 +41,10 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ inputs.runner == 'self-hosted' && inputs.runner || 'ubuntu-latest' }}
+    runs-on: ${{
+      inputs.runner == 'self-hosted' && 'self-hosted' ||
+      inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
+      'ubuntu-latest' }}
 
     permissions:
       contents: read
