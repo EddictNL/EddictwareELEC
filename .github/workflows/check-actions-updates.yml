@@ -54,10 +54,10 @@ jobs:
 
             # Create detailed markdown report with better formatting
             node --input-type=module <<'EOF'
-            import { readFileSync, writeFileSync } from 'node:fs'
+          import { readFileSync, writeFileSync } from 'node:fs'
 
-            let report = JSON.parse(readFileSync('actions-up-report.json', 'utf8'))
-            let lines = [
+          let report = JSON.parse(readFileSync('actions-up-report.json', 'utf8'))
+          let lines = [
               '## GitHub Actions Update Report',
               '',
               '### Summary',
@@ -65,22 +65,22 @@ jobs:
               '',
               '### Updates',
               '',
-            ]
+          ]
 
-            for (let update of report.updates) {
+          for (let update of report.updates) {
               let file = update.action.file ?? 'unknown'
               let currentVersion = update.currentVersion ?? 'unknown'
               let latestVersion = update.latestVersion ?? 'unknown'
               lines.push(
-                `- \`${update.action.name}\` in \`${file}\`: \`${currentVersion}\` → \`${latestVersion}\``,
+              `- \`${update.action.name}\` in \`${file}\`: \`${currentVersion}\` → \`${latestVersion}\``,
               )
-            }
+          }
 
-            lines.push('')
-            lines.push('Run `npx actions-up` locally to review and apply updates.')
+          lines.push('')
+          lines.push('Run `npx actions-up` locally to review and apply updates.')
 
-            writeFileSync('actions-up-report.md', lines.join('\n'))
-            EOF
+          writeFileSync('actions-up-report.md', lines.join('\n'))
+          EOF
 
             echo "has-updates=true" >> $GITHUB_OUTPUT
             echo "update-count=$UPDATE_COUNT" >> $GITHUB_OUTPUT
