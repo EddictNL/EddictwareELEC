@@ -429,7 +429,8 @@ jobs:
           sudo -u "${{ env.BUILDUSER }}" bash -c '
             cd "$PWD"
             DISTRO=${{ env.DISTRO }} PROJECT=${{ env.PROJECT }} DEVICE=${{ env.DEVICE }} ARCH=${{ env.ARCH }} \
-            make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} V=0 VERBOSE=0 image 2>&1 | tee build.log
+            make -j2 -l2 V=0 VERBOSE=0 image 2>&1 | tee build.log
+            # make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} V=0 VERBOSE=0 image 2>&1 | tee build.log
             exit ${PIPESTATUS[0]}
           '
           echo "==== CCACHE stats after build ===="
