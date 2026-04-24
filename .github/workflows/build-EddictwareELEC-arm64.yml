@@ -17,6 +17,7 @@ on:
           - self-hosted
           - self-hosted-sysbox
           - self-hosted-arm64
+          - arc-runner-set
       remove_packages:
         description: 'Which packages to remove before build'
         required: false
@@ -47,6 +48,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' && (
         inputs.runner == 'self-hosted-sysbox' && fromJson('["self-hosted", "sysbox"]') ||
         inputs.runner == 'self-hosted-arm64' && fromJson('["self-hosted", "ARM64"]') ||
+        inputs.runner == 'arc-runner-set' ||
         inputs.runner )) || 'ubuntu-24.04' }}
     env:
       CCACHE_DIR:
