@@ -148,7 +148,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
       with:
-        ref: 'master'
+        ref: ${{ github.ref_name }}
         # clean: false
 
     - name: Check for existing build cache (self-hosted only)
