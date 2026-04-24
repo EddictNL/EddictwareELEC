@@ -33,6 +33,14 @@ on:
 
 run-name: ${{ format('{0} ({1})', github.workflow, inputs.runner || 'ubuntu-24.04') }}
 
+env:
+  DISTRO: EddictwareELEC
+  PROJECT: RPi
+  DEVICE: RPi4
+  ARCH: aarch64
+  DEBIAN_FRONTEND: noninteractive
+  BUILDUSER: runner
+
 jobs:
   build:
     runs-on: ${{
@@ -41,14 +49,17 @@ jobs:
         inputs.runner == 'self-hosted-arm64' && fromJson('["self-hosted", "ARM64"]') ||
         inputs.runner )) || 'ubuntu-24.04' }}
     env:
-      DISTRO: EddictwareELEC
-      PROJECT: RPi
-      DEVICE: RPi4
-      ARCH: aarch64
+      CCACHE_DIR:
+      CCACHE_LOCAL_DIR:
       LARGEST_SUFFIX: ${{ inputs.remove_packages == 'largest' && '(largest only)' || (inputs.remove_packages == 'all' && '(all)' || '(none)') }}
-      DEBIAN_FRONTEND: noninteractive
-      BUILDUSER: runner
     steps:
+      - id: set_derived_env
+        name: Set derived environment variables
+        run: |
+          CCACHE_DIR_VALUE="./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache"
+          echo "CCACHE_DIR=${CCACHE_DIR_VALUE}" >> "$GITHUB_ENV"
+          echo "CCACHE_LOCAL_DIR=${CCACHE_DIR_VALUE}-local" >> "$GITHUB_ENV"
+      
       - id: list_installed_packages
         name: List installed packages before build
         if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'ubuntu-24.04-arm' && inputs.remove_packages != 'none' }}
@@ -306,8 +317,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache
-            ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local
+            ${{ env.CCACHE_DIR }}
+            ${{ env.CCACHE_LOCAL_DIR }}
           key: ccache-${{ runner.os }}-${{ hashFiles('packages/*/package.mk') }}
           restore-keys: |
             ccache-${{ runner.os }}-
@@ -350,8 +361,6 @@ jobs:
 
       - id: debug_ccache_env
         name: Debug ccache environment and directory
-        env:
-          CCACHE_DIR: ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache
         run: |
           echo "==== CCACHE DEBUG ENVIRONMENT ===="
           echo "User: $(whoami)"
@@ -365,15 +374,17 @@ jobs:
           echo "==== ccache config (ccache -p) ===="
           ccache -p || echo "ccache -p failed"
           echo "==== .ccache permissions and size ===="
-          ls -lhd ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache
-          ls -lhR ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache | head -n 40
-          du -sh ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache || echo "du failed"
+          mkdir -p ${{ env.CCACHE_DIR }}
+          ls -lhd ${{ env.CCACHE_DIR }}
+          ls -lhR ${{ env.CCACHE_DIR }} | head -n 40
+          du -sh ${{ env.CCACHE_DIR }} || echo "du failed"
           echo "==== .ccache-local permissions and size ===="
-          ls -lhd ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local
-          ls -lhR ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local | head -n 40
-          du -sh ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local || echo "du failed"
+          mkdir -p ${{ env.CCACHE_DIR }}-local
+          ls -lhd ${{ env.CCACHE_DIR }}-local
+          ls -lhR ${{ env.CCACHE_DIR }}-local | head -n 40
+          du -sh ${{ env.CCACHE_DIR }}-local || echo "du failed"
           echo "==== ccache ownership fix (if needed) ===="
-          sudo chown -R ${{ env.BUILDUSER }}:${{ env.BUILDUSER }} ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache* || echo "chown failed"
+          sudo chown -R ${{ env.BUILDUSER }}:${{ env.BUILDUSER }} ${{ env.CCACHE_DIR }}* || echo "chown failed"
           echo "==== ENVIRONMENT VARIABLES ===="
           env | sort | grep -i ccache || true
 
@@ -403,13 +414,12 @@ jobs:
         name: Build EddictwareELEC image
         env:
           MAKEFLAGS: -s
-          CCACHE_DIR: ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache
         run: |
           set -o pipefail
           echo "==== CCACHE directory preview ===="
-          find ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache | head -n 20 || echo "No ccache directory found."
+          find ${{ env.CCACHE_DIR }} | head -n 20 || echo "No ccache directory found."
           echo "==== CCACHE-LOCAL directory preview ===="
-          find ./build.${{ env.DISTRO }}-${{ env.DEVICE }}.${{ env.ARCH }}-13.0-devel/.ccache-local | head -n 20 || echo "No ccache-local directory found."
+          find ${{ env.CCACHE_DIR }}-local | head -n 20 || echo "No ccache-local directory found."
           echo "==== SOURCES directory preview ===="
           find sources | head -n 20 || echo "No sources directory found."
           echo "==== CCACHE stats before build ===="
