@@ -36,7 +36,7 @@ jobs:
 
           # Run actions-up and capture machine-readable output
           echo "Running actions-up to check for updates..."
-          actions-up --json > actions-up-report.json
+          actions-up --style preserve --json > actions-up-report.json
 
           UPDATE_COUNT=$(node -pe "JSON.parse(require('node:fs').readFileSync('actions-up-report.json', 'utf8')).summary.totalUpdates")
 
