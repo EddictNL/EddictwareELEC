@@ -120,7 +120,7 @@ jobs:
       output_meta_tags: ${{ steps.meta.outputs.tags }}
     steps:
     - name: Checkout repository scripts
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event.repository.default_branch }}
         path: ${{ github.workspace }}
@@ -141,7 +141,7 @@ jobs:
         .github/actions/scripts/set_multi.sh
 
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event.repository.default_branch }}
         path: ${{ github.workspace }}
@@ -161,7 +161,7 @@ jobs:
         # run: echo "backend_image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
     - name: Login to (private) Registry
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         registry: ${{ env.EE_Registry }}
         username: ${{ github.actor }}
@@ -219,7 +219,7 @@ jobs:
         # fi
 
     # https://stackoverflow.com/a/57877438
-    # - uses: actions/upload-artifact@v4
+    # - uses: actions/upload-artifact@v7
     #   with:
     #     name: artifact-${{ env.BUILDER_VERSION }}
     #     path: ${{ steps.get-env-vars.outputs.output_get_pwd }}
@@ -282,7 +282,7 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.event.repository.default_branch }}
         path: ${{ github.workspace }}
@@ -307,7 +307,7 @@ jobs:
         # make image # ${{ needs.pre-build.outputs.output_get_cpu_info }}
 
     # https://stackoverflow.com/a/57877438
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: always() && (steps.build-image.outcome == 'failure')
       with:
         name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
@@ -315,7 +315,7 @@ jobs:
         overwrite: true
         include-hidden-files: true
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: always()
       with:
         name: artifact_cache_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
@@ -369,7 +369,7 @@ jobs:
       if: ${{ steps.archive-image.outputs.EE_image_pathfilename }} != ''
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: "${{ steps.archive-image.outputs.EE_image_filename }}"
         path: "${{ steps.archive-image.outputs.EE_image_pathfilename }}"

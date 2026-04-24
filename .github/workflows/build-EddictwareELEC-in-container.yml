@@ -136,7 +136,7 @@ jobs:
     needs: init
     steps:
     - name: Log in to registry
-      uses: docker/login-action@v3
+      uses: docker/login-action@v4
       with:
         # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
         # username: ${{ secrets.REGISTRY_USER }}
@@ -146,7 +146,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Checkout repository
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         ref: ${{ github.ref_name }}
         # clean: false
@@ -172,7 +172,7 @@ jobs:
     - name: Restore build caches
       id: restore-build-caches
       if: inputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           .ccache
@@ -186,7 +186,7 @@ jobs:
 
     - name: Restore apt cache
       id: restore-apt-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: .apt-cache/archives
         key: ${{ runner.os }}-apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}-${{ hashFiles('tools/docker/**/Dockerfile') }}
@@ -196,7 +196,7 @@ jobs:
     - name: Download persisted caches (artifacts) as fallback
       id: download-ccache-artifact
       if: steps.restore-build-caches.outputs.cache-hit != 'true'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       continue-on-error: true
       with:
         name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -207,7 +207,7 @@ jobs:
     - name: Download persisted stamps (artifacts) as fallback
       id: download-stamps-artifact
       if: steps.restore-build-caches.outputs.cache-hit != 'true'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       continue-on-error: true
       with:
         name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -216,7 +216,7 @@ jobs:
     - name: Download persisted apt cache (artifacts) as fallback
       id: download-apt-artifact
       if: steps.restore-apt-cache.outputs.cache-hit != 'true'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       continue-on-error: true
       with:
         name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
@@ -343,7 +343,7 @@ jobs:
 
     - name: Upload CI diagnostics
       if: ${{ always() && !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ci-diagnostics-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
         path: |
@@ -499,7 +499,7 @@ jobs:
 
     - name: Upload toolchain artifact (after population)
       if: success() && !cancelled()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: toolchain-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
         path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/toolchain
@@ -548,7 +548,7 @@ jobs:
     - name: Upload CI diagnostics (post-prebuild)
       id: upload-ci-diagnostics-post
       if: ${{ always() && !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ci-diagnostics-post-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
         path: |
@@ -576,7 +576,7 @@ jobs:
         NB_CORES=$(grep -c '^processor' /proc/cpuinfo)
         [ ${{ env.DEBUG }} ] && echo "[NB_CORES]: $NB_CORES"
 
-        # pull the image (authentication is handled by docker/login-action@v3)
+        # pull the image (authentication is handled by docker/login-action@v4)
         if [ ${{ env.DEBUG }} ]; then DOCKER_DEBUG="--debug"; else DOCKER_DEBUG=""; fi
         docker $DOCKER_DEBUG image pull "${{ needs.init.outputs.output_ee_distro_tag }}"
         # Determine image numeric UID/GID for CAN_WRITE test; prefer image UID when available
@@ -730,7 +730,7 @@ jobs:
     # - artifact_logs_...  (uploaded on failure for debugging)
     # - built image artifact (final product)
     # Keep uploads `if: always()` so fallback artifacts are refreshed.
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ always() && !cancelled() && (steps.build-image.outcome == 'failure') }}
       with:
         name: artifact_logs_${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
@@ -744,7 +744,7 @@ jobs:
 
     - name: Upload ccache artifact
       if: ${{ success() && !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ccache-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
         path: |
@@ -756,7 +756,7 @@ jobs:
 
     - name: Upload stamps artifact
       if: ${{ success() && !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: stamps-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
         path: build.${{ env.EE_Distro }}-${{ env.EE_Device }}.${{ env.EE_Arch }}-13.0-devel/.stamps
@@ -764,7 +764,7 @@ jobs:
 
     - name: Upload apt-cache artifact
       if: ${{ success() && !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: apt-${{ env.DistroCodeName }}-${{ env.EE_Arch }}
         path: .apt-cache/archives
@@ -801,7 +801,7 @@ jobs:
 
     - name: Upload built ${{ env.EE_Distro }} image
       if: ${{ steps.image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: "${{ steps.image-path.outputs.EE_image_filename }}"
         path: "${{ steps.image-path.outputs.EE_image_pathfilename }}"

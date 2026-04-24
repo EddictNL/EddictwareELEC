@@ -20,7 +20,7 @@ runs:
 
     - id: cache_node_modules
       name: Cache action node modules
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ./.github/actions/javascript/with-post-step/node_modules
         key: ${{ runner.os }}-with-post-step-${{ hashFiles('.github/actions/javascript/with-post-step/package-lock.json') }}
