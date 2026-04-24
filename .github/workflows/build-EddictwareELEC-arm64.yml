@@ -64,7 +64,7 @@ jobs:
       
       - id: list_installed_packages
         name: List installed packages before build
-        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'ubuntu-24.04-arm' && inputs.remove_packages != 'none' }}
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' && inputs.runner != 'ubuntu-24.04-arm' && inputs.remove_packages != 'none' }}
         run: |
           echo "Running apt-get update:"
           sudo apt-get update -qq
@@ -208,7 +208,7 @@ jobs:
 
       - id: install_deps
         name: Install build dependencies (for non-self-hosted runners)
-        if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
         run: |
           # as stated in https://wiki.libreelec.tv/development/build-basics
           sudo apt-get update
@@ -336,7 +336,7 @@ jobs:
 
       - id: check_disk_space
         name: Check free disk space before build
-        # if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
         run: |
           echo "Disk usage before build:"
           df -h
@@ -345,7 +345,7 @@ jobs:
 
       - id: cleanup_tmp
         name: Cleanup /tmp and unused caches
-        # if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
         run: |
           echo "Cleaning /tmp, /var/tmp, and runner cache..."
           sudo rm -rf /tmp/* /var/tmp/* || true
