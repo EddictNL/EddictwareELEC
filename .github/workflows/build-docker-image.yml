@@ -51,6 +51,7 @@ jobs:
       packages: write
       attestations: write
       id-token: write
+      artifact-metadata: write
 
     env:
       RUNNER_CHOICE: ${{ inputs.runner || 'github' }}
