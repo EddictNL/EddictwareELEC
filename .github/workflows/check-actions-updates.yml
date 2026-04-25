@@ -5,6 +5,9 @@ on:
     types: [edited, opened, synchronize, reopened]
   workflow_dispatch:
 
+env:
+  package-name: "@eddict/actions-up"
+
 jobs:
   check-actions:
     name: Check for GHA updates
@@ -23,7 +26,7 @@ jobs:
           node-version: '24'
 
       - name: Install actions-up
-        run: npm install -g actions-up
+        run: npm install -g ${{ env.package-name }}
 
       - name: Run actions-up check
         id: actions-check
@@ -37,7 +40,7 @@ jobs:
           # Run actions-up and capture machine-readable output
           echo "Running actions-up to check for updates..."
           # --style preserve
-          actions-up --style sha --json > actions-up-report.json
+          actions-up --style sha --update-detection commit --json > actions-up-report.json
 
           UPDATE_COUNT=$(node -pe "JSON.parse(require('node:fs').readFileSync('actions-up-report.json', 'utf8')).summary.totalUpdates")
 
@@ -78,7 +81,7 @@ jobs:
           }
 
           lines.push('')
-          lines.push('Run `npx actions-up` locally to review and apply updates.')
+          lines.push(`Run \`npx ${{ env.package-name }}\` locally to review and apply updates.`)
 
           writeFileSync('actions-up-report.md', lines.join('\n'))
           EOF
@@ -196,6 +199,6 @@ jobs:
         run: |
           echo "::error:: Found ${{ steps.actions-check.outputs.update-count }} outdated GitHub Actions. Please update them before merging."
           echo ""
-          echo "You can update them by running: npx actions-up"
+          echo "You can update them by running: npx ${{ env.package-name }}"
           echo "Or manually update the versions in your workflows."
           exit 1
