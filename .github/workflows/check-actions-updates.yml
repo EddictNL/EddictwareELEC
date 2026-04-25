@@ -40,7 +40,7 @@ jobs:
           # Run actions-up and capture machine-readable output
           echo "Running actions-up to check for updates..."
           # --style preserve
-          actions-up --style sha --update-detection commit --json > actions-up-report.json
+          actions-up --style sha --detect-by commit --json > actions-up-report.json
 
           UPDATE_COUNT=$(node -pe "JSON.parse(require('node:fs').readFileSync('actions-up-report.json', 'utf8')).summary.totalUpdates")
 
