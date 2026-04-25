@@ -1,4 +1,4 @@
-# https://github.com/azat-io/actions-up#automated-pr-checks
+# https://github.com/EddictNL/actions-up#automated-pr-checks
 name: Check for outdated GitHub Actions
 on:
   pull_request:

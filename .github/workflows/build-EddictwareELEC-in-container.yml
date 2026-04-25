@@ -16,6 +16,7 @@ on:
         options:
           - self-hosted
           - github
+          - arc-runner-set
         default: self-hosted
       os:
         description: 'OS codename of build container'

@@ -10,6 +10,7 @@ on:
         options:
           - self-hosted
           - github
+          - arc-runner-set
         default: github
       environment:
         description: 'Environment to run against'
