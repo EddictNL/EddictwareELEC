@@ -46,4 +46,7 @@ fi
 # OEM packages
 [ "${OEM_SUPPORT}" = "yes" ] && PKG_DEPENDS_TARGET+=" oem"
 
+# Entware package manager
+[ "${ENTWARE_SUPPORT}" = "yes" ] && PKG_DEPENDS_TARGET+=" opkg"
+
 true
