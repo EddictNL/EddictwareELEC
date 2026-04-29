@@ -156,7 +156,7 @@ jobs:
     - name: Compose image tag
       id: compose-image-tag
       run: |
-        dTag="${{ env.EE_Registry }}/eddict/${{ env.EE_Distro }}-${DistroCodeName@L}"
+        dTag="${{ env.EE_Registry }}/${{ github.repository_owner }}/${{ env.EE_Distro }}-${DistroCodeName@L}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}" | sudo tee -a $GITHUB_OUTPUT
         # run: echo "backend_image=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
