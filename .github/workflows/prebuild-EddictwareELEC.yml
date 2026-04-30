@@ -21,11 +21,14 @@ on:
         required: true
         type: choice
         options:
-          - noble
-          - jammy
           - bookworm
+          - jammy
+          - noble
+          - noble-custom
+          - plucky
+          - questing
           - sid
-        default: noble
+          default: noble
       arch:
         description: 'Arch of build target'
         required: true
