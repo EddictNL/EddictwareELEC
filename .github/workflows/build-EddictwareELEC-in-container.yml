@@ -124,13 +124,13 @@ jobs:
         DOCKER_GID=$(id -g docker 2>/dev/null || echo 1000)
         IMG_UID=$(docker run --rm --entrypoint id $EE_Distro_tag -u 2>/dev/null || echo $DOCKER_UID)
         IMG_GID=$(docker run --rm --entrypoint id $EE_Distro_tag -g 2>/dev/null || echo $DOCKER_GID)
-        echo "RUNNER_TYPE=$RUNNER_TYPE" >> $GITHUB_ENV
-        echo "HOST_UID=$HOST_UID" >> $GITHUB_ENV
-        echo "HOST_GID=$HOST_GID" >> $GITHUB_ENV
-        echo "DOCKER_UID=$DOCKER_UID" >> $GITHUB_ENV
-        echo "DOCKER_GID=$DOCKER_GID" >> $GITHUB_ENV
-        echo "IMG_UID=$IMG_UID" >> $GITHUB_ENV
-        echo "IMG_GID=$IMG_GID" >> $GITHUB_ENV
+        echo "RUNNER_TYPE=$RUNNER_TYPE" | sudo tee -a $GITHUB_OUTPUT
+        echo "HOST_UID=$HOST_UID" | sudo tee -a $GITHUB_OUTPUT
+        echo "HOST_GID=$HOST_GID" | sudo tee -a $GITHUB_OUTPUT
+        echo "DOCKER_UID=$DOCKER_UID" | sudo tee -a $GITHUB_OUTPUT
+        echo "DOCKER_GID=$DOCKER_GID" | sudo tee -a $GITHUB_OUTPUT
+        echo "IMG_UID=$IMG_UID" | sudo tee -a $GITHUB_OUTPUT
+        echo "IMG_GID=$IMG_GID" | sudo tee -a $GITHUB_OUTPUT
 
   build:
     runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
