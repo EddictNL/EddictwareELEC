@@ -117,7 +117,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: tools/docker/${{ inputs.os }}-custom/prebuilt-toolchain.Dockerfile
+          file: tools/docker/${{ inputs.os }}/prebuilt-toolchain.Dockerfile
           platforms: linux/amd64
           # platforms: linux/amd64,linux/arm64
           push: true
