@@ -143,7 +143,7 @@ jobs:
         # username: ${{ secrets.REGISTRY_USER }}
         # password: ${{ secrets.REGISTRY_PWD }}
         registry: ${{ env.EE_Registry }}
-        username: ${{ github.actor }}
+        username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Checkout repository
