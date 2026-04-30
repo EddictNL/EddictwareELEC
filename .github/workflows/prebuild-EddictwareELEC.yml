@@ -28,7 +28,7 @@ on:
           - plucky
           - questing
           - sid
-          default: noble
+        default: noble
       arch:
         description: 'Arch of build target'
         required: true
