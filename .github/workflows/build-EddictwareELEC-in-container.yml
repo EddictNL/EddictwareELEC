@@ -104,7 +104,7 @@ jobs:
     - name: Compose image tag
       id: compose-image-tag
       run: |
-        dTag="${{ env.EE_Registry }}/${{ github.repository_owner }}/${{ env.EE_Distro }}-${{ env.DistroCodeName }}:latest"
+        dTag="${{ env.EE_Registry }}/${{ github.repository_owner }}/${{ env.EE_Distro }}:${{ env.DistroCodeName }}"
         # Use ,, to convert all characters to lowercase
         echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT

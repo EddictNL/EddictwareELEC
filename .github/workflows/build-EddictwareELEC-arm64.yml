@@ -201,7 +201,7 @@ jobs:
         name: Checkout EddictwareELEC
         uses: actions/checkout@v6
         with:
-          repository: Eddict/EddictwareELEC
+          repository: ${{ github.repository_owner }}/${{ github.repository }}
           ref: upstream
           path: ${{ github.workspace }}
           clean: false
