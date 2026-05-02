@@ -84,7 +84,7 @@ jobs:
         # echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_image=${dImage,,}" >> $GITHUB_OUTPUT
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
-        echo "EE_Distro_imagetag=${dImage}:${dTag}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_imagetag=${dImage,,}:${dTag,,}" >> $GITHUB_OUTPUT
 
         echo "REGISTRY=${{ env.REGISTRY }}"
         echo "REGISTRY-USER=${{ env.REGISTRY_USER }}"
