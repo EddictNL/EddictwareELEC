@@ -110,13 +110,13 @@ jobs:
         #   type=semver,pattern={{version}}
         #   type=semver,pattern={{major}}.{{minor}}
         labels: |
-          org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ github.repository }}
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
           org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
       with:
-        name: builder-${{ github.repository }}
+        name: builder-eddictwareelec # ${{ github.repository }}
         version: latest
         keep-state: true
         cleanup: false
