@@ -77,14 +77,15 @@ jobs:
       run: |
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
-        dTag="${{ env.REGISTRY }}/${{ github.repository }}-${{ env.ENVIRONMENT_CHOICE }}"
+        # dTag="${{ env.REGISTRY }}/${{ github.repository }}-${{ env.ENVIRONMENT_CHOICE }}"
+        dTag="${{ env.REGISTRY }}/${{ github.repository }}:${{ env.ENVIRONMENT_CHOICE }}"
         # Use ,, to convert all characters to lowercase
         # echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
 
         echo "REGISTRY=${{ env.REGISTRY }}"
-        echo "REGISTRY_USER=${{ env.REGISTRY_USER }}"
-        echo "REGISTRY_PWD=${{ env.REGISTRY_PWD }}"
+        echo "REGISTRY-USER=${{ env.REGISTRY_USER }}"
+        echo "REGISTRY-PWD=${{ env.REGISTRY_PWD }}"
       shell: bash
 
     - name: Log in to registry
@@ -109,13 +110,13 @@ jobs:
         #   type=semver,pattern={{version}}
         #   type=semver,pattern={{major}}.{{minor}}
         labels: |
-          org.opencontainers.image.source=https://github.com/Eddict/EddictwareELEC
+          org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ github.repository }}
           org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
       with:
-        name: builder-eddictwareelec
+        name: builder-${{ github.repository }}
         version: latest
         keep-state: true
         cleanup: false
@@ -141,7 +142,7 @@ jobs:
         file: "./tools/docker/${{ env.ENVIRONMENT_CHOICE }}/Dockerfile"
         # outputs: type=cacheonly # build without pushing
         push: true
-        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
         # tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         # target: custom
