@@ -37,6 +37,8 @@ run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.runner || 'github'
 
 env:
   REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
+  REGISTRY_USER: ${{ inputs.runner == 'github' && github.actor || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
+  REGISTRY_PWD: ${{ inputs.runner == 'github' && secrets.GITHUB_TOKEN || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
   RUNNER_TOOL_CACHE: /toolcache
 
 jobs:
@@ -59,8 +61,7 @@ jobs:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
 
     steps:
-    -
-      name: Get docker guid
+    - name: Get docker guid
       id: get-docker-guid
       run: |
         # Some runner images do not have a 'docker' user. Fall back to current UID.
@@ -71,8 +72,7 @@ jobs:
         fi
       shell: bash
 
-    -
-      name: Compose image tag
+    - name: Compose image tag
       id: compose-image-tag
       run: |
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
@@ -81,18 +81,21 @@ jobs:
         # Use ,, to convert all characters to lowercase
         # echo "EE_Distro_tag=${dTag,,}"
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
+
+        echo "REGISTRY=${{ env.REGISTRY }}"
+        echo "REGISTRY_USER=${{ env.REGISTRY_USER }}"
+        echo "REGISTRY_PWD=${{ env.REGISTRY_PWD }}"
       shell: bash
 
-    -
-      name: Log in to registry
+    - name: Log in to registry
       uses: docker/login-action@v4
       with:
         # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
         # username: ${{ secrets.REGISTRY_USER }}
         # password: ${{ secrets.REGISTRY_PWD }}
         registry: ${{ env.REGISTRY }}
-        username: ${{ env.RUNNER_CHOICE == 'github' && github.actor || env.RUNNER_CHOICE == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
-        password: ${{ env.RUNNER_CHOICE == 'github' && secrets.GITHUB_TOKEN || env.RUNNER_CHOICE == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
+        username: ${{ env.REGISTRY_USER }}
+        password: ${{ env.REGISTRY_PWD }}
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
@@ -109,8 +112,7 @@ jobs:
           org.opencontainers.image.source=https://github.com/Eddict/EddictwareELEC
           org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
 
-    -
-      name: Set up Docker Buildx
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
       with:
         name: builder-eddictwareelec
@@ -124,16 +126,14 @@ jobs:
         #     http = false
 #        buildkitd-flags: '"--progress ''plain''"'
 
-    # -
-    #   name: Cache Docker layers
+    # - name: Cache Docker layers
     #   uses: actions/cache@v5
     #   with:
     #     path: /tmp/.buildx-cache
     #     key: ${{ runner.os }}-${{ env.DistroCodeName }}
     #     # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
 
-    -
-      name: Build and export to (local/private) registry
+    - name: Build and export to (local/private) registry
       id: push
       uses: docker/build-push-action@v7
       with:
