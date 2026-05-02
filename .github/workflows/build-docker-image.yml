@@ -78,10 +78,13 @@ jobs:
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
         # dTag="${{ env.REGISTRY }}/${{ github.repository }}-${{ env.ENVIRONMENT_CHOICE }}"
-        dTag="${{ env.REGISTRY }}/${{ github.repository }}:${{ env.ENVIRONMENT_CHOICE }}"
+        dImage="${{ env.REGISTRY }}/${{ github.repository }}"
+        dTag="${{ env.ENVIRONMENT_CHOICE }}"
         # Use ,, to convert all characters to lowercase
         # echo "EE_Distro_tag=${dTag,,}"
+        echo "EE_Distro_image=${dImage,,}" >> $GITHUB_OUTPUT
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_imagetag=${dImage}:${dTag}" >> $GITHUB_OUTPUT
 
         echo "REGISTRY=${{ env.REGISTRY }}"
         echo "REGISTRY-USER=${{ env.REGISTRY_USER }}"
@@ -102,16 +105,16 @@ jobs:
       id: meta
       uses: docker/metadata-action@v6
       with:
-        images: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        images: ${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
         # tags: |
-        #   ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        #   ${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
         #   type=ref,event=branch
         #   type=ref,event=pr
         #   type=semver,pattern={{version}}
         #   type=semver,pattern={{major}}.{{minor}}
         labels: |
           org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+          org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v4
@@ -142,13 +145,13 @@ jobs:
         file: "./tools/docker/${{ env.ENVIRONMENT_CHOICE }}/Dockerfile"
         # outputs: type=cacheonly # build without pushing
         push: true
-        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
         # tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         # target: custom
         no-cache: false
-        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
-        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
+        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}:buildcache
+        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}:buildcache,mode=max
         # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
         # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
         # cache-from: type=local,src=/tmp/.buildx-cache
@@ -170,8 +173,8 @@ jobs:
     #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
     - name: Generate artifact attestation
-      uses: actions/attest-build-provenance@v4
+      uses: actions/attest@v4
       with:
-        subject-name: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        subject-name: ${{ steps.compose-image-tag.outputs.EE_Distro_image }}
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true
