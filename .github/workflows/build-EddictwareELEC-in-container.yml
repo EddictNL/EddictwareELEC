@@ -15,6 +15,7 @@ on:
         type: choice
         options:
           - self-hosted
+          - aws
           - github
           - arc-runner-set
         default: self-hosted
@@ -68,7 +69,7 @@ defaults:
 
 jobs:
   init:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
     permissions:
       contents: read
       packages: read
@@ -129,7 +130,7 @@ jobs:
         echo "IMG_GID=$IMG_GID" | sudo tee -a $GITHUB_OUTPUT
 
   build:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
     needs: init
     steps:
     - name: Log in to registry
@@ -150,7 +151,7 @@ jobs:
 
     - name: Check for existing build cache (self-hosted only)
       id: check-build-cache
-      if: inputs.runner == 'self-hosted'
+      if: inputs.runner == 'self-hosted' || inputs.runner == 'aws'
       run: |
         # Check if all required cache dirs/files exist and are non-empty
         missing=0
