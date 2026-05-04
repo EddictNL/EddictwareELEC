@@ -10,6 +10,7 @@ on:
         options:
           - github
           - self-hosted
+          - arc-runner-set
           - gitea
         default: github
       environment:
@@ -25,6 +26,7 @@ on:
           - plucky
           - questing
           - sid
+          - actions-runner
         default: noble
   # deployment:
   push:
@@ -35,17 +37,23 @@ run-name: ${{ format('{0} ({1}/{2})', github.workflow, inputs.runner || 'github'
 
 env:
   REGISTRY: ${{ inputs.runner == 'github' && 'ghcr.io' || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_FQDN || 'ghcr.io' }}
+  REGISTRY_USER: ${{ inputs.runner == 'github' && github.actor || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
+  REGISTRY_PWD: ${{ inputs.runner == 'github' && secrets.GITHUB_TOKEN || inputs.runner == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
   RUNNER_TOOL_CACHE: /toolcache
 
 jobs:
   build:
-    runs-on: ${{ inputs.runner == 'self-hosted' && inputs.runner || 'ubuntu-latest' }}
+    runs-on: ${{
+      inputs.runner == 'self-hosted' && 'self-hosted' ||
+      inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
+      'ubuntu-latest' }}
 
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
+      artifact-metadata: write
 
     env:
       RUNNER_CHOICE: ${{ inputs.runner || 'github' }}
@@ -53,8 +61,7 @@ jobs:
       BUILDKIT_PROGRESS: 'auto' #'plain' 'quiet'
 
     steps:
-    -
-      name: Get docker guid
+    - name: Get docker guid
       id: get-docker-guid
       run: |
         # Some runner images do not have a 'docker' user. Fall back to current UID.
@@ -65,49 +72,54 @@ jobs:
         fi
       shell: bash
 
-    -
-      name: Compose image tag
+    - name: Compose image tag
       id: compose-image-tag
       run: |
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}/${{ github.repository_owner }}/${{ inputs.environment }}"
         # dTag="${{ secrets.REGISTRY_PRIVATE_FQDN }}${{ inputs.environment }}"
-        dTag="${{ env.REGISTRY }}/${{ github.repository }}-${{ env.ENVIRONMENT_CHOICE }}"
+        # dTag="${{ env.REGISTRY }}/${{ github.repository }}-${{ env.ENVIRONMENT_CHOICE }}"
+        dImage="${{ env.REGISTRY }}/${{ github.repository }}"
+        dTag="${{ env.ENVIRONMENT_CHOICE }}"
         # Use ,, to convert all characters to lowercase
         # echo "EE_Distro_tag=${dTag,,}"
+        echo "EE_Distro_image=${dImage,,}" >> $GITHUB_OUTPUT
         echo "EE_Distro_tag=${dTag,,}" >> $GITHUB_OUTPUT
+        echo "EE_Distro_imagetag=${dImage,,}:${dTag,,}" >> $GITHUB_OUTPUT
+
+        echo "REGISTRY=${{ env.REGISTRY }}"
+        echo "REGISTRY-USER=${{ env.REGISTRY_USER }}"
+        echo "REGISTRY-PWD=${{ env.REGISTRY_PWD }}"
       shell: bash
 
-    -
-      name: Log in to registry
-      uses: docker/login-action@v3
+    - name: Log in to registry
+      uses: docker/login-action@v4
       with:
         # registry: ${{ secrets.REGISTRY_PRIVATE_FQDN }} #https:// #:5000 
         # username: ${{ secrets.REGISTRY_USER }}
         # password: ${{ secrets.REGISTRY_PWD }}
         registry: ${{ env.REGISTRY }}
-        username: ${{ env.RUNNER_CHOICE == 'github' && github.actor || env.RUNNER_CHOICE == 'gitea' && secrets.MYGITEA_REGISTRY_USER || secrets.REGISTRY_USER }}
-        password: ${{ env.RUNNER_CHOICE == 'github' && secrets.GITHUB_TOKEN || env.RUNNER_CHOICE == 'gitea' && secrets.MYGITEA_REGISTRY_TOKEN || secrets.REGISTRY_PWD }}
+        username: ${{ env.REGISTRY_USER }}
+        password: ${{ env.REGISTRY_PWD }}
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
-        images: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        images: ${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
         # tags: |
-        #   ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        #   ${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
         #   type=ref,event=branch
         #   type=ref,event=pr
         #   type=semver,pattern={{version}}
         #   type=semver,pattern={{major}}.{{minor}}
         labels: |
-          org.opencontainers.image.source=https://github.com/Eddict/EddictwareELEC
-          org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+          org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          org.opencontainers.image.ref.name=${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
 
-    -
-      name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
       with:
-        name: builder-eddictwareelec
+        name: builder-eddictwareelec # ${{ github.repository }}
         version: latest
         keep-state: true
         cleanup: false
@@ -118,30 +130,28 @@ jobs:
         #     http = false
 #        buildkitd-flags: '"--progress ''plain''"'
 
-    # -
-    #   name: Cache Docker layers
-    #   uses: actions/cache@v4
+    # - name: Cache Docker layers
+    #   uses: actions/cache@v5
     #   with:
     #     path: /tmp/.buildx-cache
     #     key: ${{ runner.os }}-${{ env.DistroCodeName }}
     #     # restore-keys: ${{ runner.os }}-${{ github.repository }}-${{ github.ref_name }}
 
-    -
-      name: Build and export to (local/private) registry
+    - name: Build and export to (local/private) registry
       id: push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         # context: "{{defaultContext}}:mysubdir"
         file: "./tools/docker/${{ env.ENVIRONMENT_CHOICE }}/Dockerfile"
         # outputs: type=cacheonly # build without pushing
         push: true
-        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:latest
+        tags: ${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}
         # tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         # target: custom
         no-cache: false
-        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache
-        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_tag }}:buildcache,mode=max
+        # cache-from: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}:buildcache
+        # cache-to: type=registry,ref=${{ steps.compose-image-tag.outputs.EE_Distro_imagetag }}:buildcache,mode=max
         # cache-from: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache
         # cache-to: type=registry,ref=${{ vars.DOCKER_HUB_USERNAME }}/${{ vars.DOCKER_HUB_IMAGE_NAME }}.1:buildcache,mode=max
         # cache-from: type=local,src=/tmp/.buildx-cache
@@ -163,8 +173,8 @@ jobs:
     #     mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
     - name: Generate artifact attestation
-      uses: actions/attest-build-provenance@v3
+      uses: actions/attest@v4
       with:
-        subject-name: ${{ steps.compose-image-tag.outputs.EE_Distro_tag }}
+        subject-name: ${{ steps.compose-image-tag.outputs.EE_Distro_image }}
         subject-digest: ${{ steps.push.outputs.digest }}
         push-to-registry: true

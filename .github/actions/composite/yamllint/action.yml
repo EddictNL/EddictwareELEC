@@ -5,6 +5,7 @@
 name: 'yamllint'
 description: 'Lint YAML files using yamllint (ibiqlik/action-yamllint)'
 author: 'EddictwareELEC maintainers'
+
 inputs:
   yamllint_config_data:
     description: 'Yamllint config data (optional)'
@@ -18,11 +19,13 @@ inputs:
     description: 'Files or globs to lint (optional, default: all YAML files)'
     required: false
     default: '**/*.yml **/*.yaml'
+
 runs:
   using: 'composite'
   steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
+
     - name: Run yamllint
       uses: ibiqlik/action-yamllint@v3
       with:

@@ -66,4 +66,5 @@ dist/
 .azure/test-get-endpoint.ps1
 .azure/update-acr-endpoint.ps1
 renamebranch.sh
-/.vscode/tasks.json
+.vscode/tasks.json
+.vscode/settings.json

@@ -64,7 +64,7 @@ jobs:
       
       - id: list_installed_packages
         name: List installed packages before build
-        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'ubuntu-24.04-arm' && inputs.remove_packages != 'none' }}
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' && inputs.runner != 'ubuntu-24.04-arm' && inputs.remove_packages != 'none' }}
         run: |
           echo "Running apt-get update:"
           sudo apt-get update -qq
@@ -81,7 +81,7 @@ jobs:
       - id: upload_installed_packages
         name: Upload installed packages lists
         if: steps.list_installed_packages.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installed-packages
           path: |
@@ -190,7 +190,7 @@ jobs:
       - id: upload_installed_packages_after_cleanup
         name: Upload installed packages list after cleanup
         if: steps.list_installed_packages.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: installed-packages
           path: installed-packages-after-cleanup.txt
@@ -199,16 +199,16 @@ jobs:
 
       - id: checkout
         name: Checkout EddictwareELEC
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          repository: Eddict/EddictwareELEC
+          repository: ${{ github.repository }}
           ref: upstream
           path: ${{ github.workspace }}
           clean: false
 
       - id: install_deps
         name: Install build dependencies (for non-self-hosted runners)
-        if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
         run: |
           # as stated in https://wiki.libreelec.tv/development/build-basics
           sudo apt-get update
@@ -316,7 +316,7 @@ jobs:
 
       - id: cache_ccache
         name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ env.CCACHE_DIR }}
@@ -327,7 +327,7 @@ jobs:
 
       - id: cache_sources
         name: Cache source archives
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: sources
           key: sources-${{ runner.os }}-${{ hashFiles('packages/*/package.mk') }}
@@ -336,7 +336,7 @@ jobs:
 
       - id: check_disk_space
         name: Check free disk space before build
-        # if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
         run: |
           echo "Disk usage before build:"
           df -h
@@ -345,7 +345,7 @@ jobs:
 
       - id: cleanup_tmp
         name: Cleanup /tmp and unused caches
-        # if: ${{ !contains(inputs.runner || '', 'self-hosted') }}
+        # if: ${{ !contains(inputs.runner || '', 'self-hosted') && inputs.runner != 'arc-runner-set' }}
         run: |
           echo "Cleaning /tmp, /var/tmp, and runner cache..."
           sudo rm -rf /tmp/* /var/tmp/* || true
@@ -429,7 +429,8 @@ jobs:
           sudo -u "${{ env.BUILDUSER }}" bash -c '
             cd "$PWD"
             DISTRO=${{ env.DISTRO }} PROJECT=${{ env.PROJECT }} DEVICE=${{ env.DEVICE }} ARCH=${{ env.ARCH }} \
-            make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} V=0 VERBOSE=0 image 2>&1 | tee build.log
+            make -j2 -l2 V=0 VERBOSE=0 image 2>&1 | tee build.log
+            # make -j${RECOMMENDED_J:-$(nproc)} -l${RECOMMENDED_L:-$(nproc)} V=0 VERBOSE=0 image 2>&1 | tee build.log
             exit ${PIPESTATUS[0]}
           '
           echo "==== CCACHE stats after build ===="
@@ -442,7 +443,7 @@ jobs:
 
       - id: upload_image
         name: Upload built image artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: EddictwareELEC-RPi4-aarch64-image
           path: ./target/*.img.gz
@@ -450,7 +451,7 @@ jobs:
 
       - id: upload_log
         name: Upload full build log
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: build.log
           path: build.log

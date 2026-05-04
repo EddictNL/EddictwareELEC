@@ -1,4 +1,6 @@
 name: 'noble'
+description: 'Builds the EddictwareELEC image in the noble Docker container'
+
 inputs:
   make-args:
     description: 'Arguments for make command to run inside container'
