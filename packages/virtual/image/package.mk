@@ -49,4 +49,7 @@ fi
 # Entware package manager
 [ "${ENTWARE_SUPPORT}" = "yes" ] && PKG_DEPENDS_TARGET+=" opkg"
 
+# NTFS programs for all except RPi until RPi is updated to kernel > 6.18
+[ ! "${PROJECT}" = "RPi" ] && PKG_DEPENDS_TARGET+=" ntfsprogs-plus"
+
 true
