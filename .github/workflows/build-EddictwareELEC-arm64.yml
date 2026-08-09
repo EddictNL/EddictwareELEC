@@ -254,17 +254,18 @@ jobs:
               # -quit causes find to exit immediately after it finds the first match
               if [ -n "$(find "$PWD" ! -user ${{ env.BUILDUSER }} -print -quit)" ]; then
                   echo "Evaluation: TRUE (Mismatched owner found)"
+                  chown -R "${{ env.BUILDUSER }}" "$PWD"
               fi
-              # for each owner mismatch, fix ownership (only if needed)
-              find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} +
-              # for each owner mismatch, also ensure permissions are 755 (only if needed)
-              find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
-              # Fix Directories (755)
-              find "$PWD" -type d ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
-              # Fix Files (644)
-              find "$PWD" -type f ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 644 {} +
-              # fix both ownership and permissions only when they are wrong
-              find "$PWD" \( ! -user ${{ env.BUILDUSER }} -o ! -perm 755 \) -exec chown -c ${{ env.BUILDUSER }} {} + -exec chmod -c 755 {} +
+              # # for each owner mismatch, fix ownership (only if needed)
+              # find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} +
+              # # for each owner mismatch, also ensure permissions are 755 (only if needed)
+              # find "$PWD" ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
+              # # Fix Directories (755)
+              # find "$PWD" -type d ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 755 {} +
+              # # Fix Files (644)
+              # find "$PWD" -type f ! -user ${{ env.BUILDUSER }} -exec chown ${{ env.BUILDUSER }} {} + -exec chmod 644 {} +
+              # # fix both ownership and permissions only when they are wrong
+              # find "$PWD" \( ! -user ${{ env.BUILDUSER }} -o ! -perm 755 \) -exec chown -c ${{ env.BUILDUSER }} {} + -exec chmod -c 755 {} +
 
 
             else
