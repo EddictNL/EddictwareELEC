@@ -245,13 +245,11 @@ jobs:
               echo "Ensuring ${{ env.BUILDUSER }} owns the workspace (will chown only if needed)..."
               # Only chown if needed (avoid unnecessary chown)
               if [ "$(stat -c %U "$PWD")" != "${{ env.BUILDUSER }}" ]; then
+                echo "Recursively chowning workspace to ${{ env.BUILDUSER }}..."
                 chown -R "${{ env.BUILDUSER }}" "$PWD"
               else
                 echo "Workspace already owned by ${{ env.BUILDUSER }}, skipping chown."
               fi
-              ---
-              echo "Recursively chowning workspace to ${{ env.BUILDUSER }}..."
-              chown -R "${{ env.BUILDUSER }}" "$PWD"
 
               # -quit causes find to exit immediately after it finds the first match
               if [ -n "$(find "$PWD" ! -user ${{ env.BUILDUSER }} -print -quit)" ]; then
