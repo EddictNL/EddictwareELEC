@@ -2,8 +2,8 @@
 # Copyright (C) 2026-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="ostree"
-PKG_VERSION="2026.1"
-PKG_SHA256="8e77c285dd6fa5ec5fb063130390977be727fe11107335ed8778a40385069e95"
+PKG_VERSION="2026.3"
+PKG_SHA256="e560e47631d1f703e9ed3425e8909ccd87fa2992422c07348ca88ec98943c8fb"
 PKG_LICENSE="LGPL-2.0-or-later"
 PKG_SITE="https://github.com/ostreedev/ostree"
 PKG_URL="https://github.com/ostreedev/ostree/releases/download/v${PKG_VERSION}/libostree-${PKG_VERSION}.tar.xz"

@@ -3,8 +3,8 @@
 # Copyright (C) 2016-present Team LibreELEC (https://libreelec.tv)
 
 PKG_NAME="cmake"
-PKG_VERSION="4.3.4"
-PKG_SHA256="fdeff897b9eb49d764539f2b1edc6eb7e1440df325678a97c1978499e931adda"
+PKG_VERSION="4.4.2"
+PKG_SHA256="1db9e61e60b6e0874c86386340b910382f3c5e75b9fbfb44d122063129a2789d"
 PKG_LICENSE="BSD-3-Clause"
 PKG_SITE="https://cmake.org/"
 PKG_URL="https://cmake.org/files/v$(get_pkg_version_maj_min)/cmake-${PKG_VERSION}.tar.gz"
