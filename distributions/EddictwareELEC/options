@@ -10,6 +10,10 @@
   DISTRO_MIRROR="https://sources.libreelec.tv/mirror"
   DISTRO_SRC="https://sources.libreelec.tv/$DISTRO_VERSION"
 
+# Distribution alternative GNU location
+  GNU_MIRROR="${GNU_MIRROR:-https://ftp.fau.de/gnu}"
+  GNU_MIRROR_GNU="${GNU_MIRROR_GNU:-https://ftp.fau.de/gnu}"
+
 # Distribution Home URL
   DISTRO_HOME_URL="https://github.com/Eddict/LibreELEC.tv"
 
