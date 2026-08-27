@@ -141,7 +141,7 @@ fi
 
 # Generic/default distribution
 GNU_MIRROR="${GNU_MIRROR:-https://ftpmirror.gnu.org}"
-GNU_MIRROR_GNU="${GNU_MIRROR}/gnu"
+#GNU_MIRROR_GNU="${GNU_MIRROR}/gnu"
 GNU_MIRROR_GNU="${GNU_MIRROR_GNU:-https://ftpmirror.gnu.org/gnu}"
 
 # overwrite OEM_SUPPORT via commandline
