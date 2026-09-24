@@ -56,7 +56,7 @@ defaults:
 
 jobs:
   hello_world_job:
-    runs-on: ubuntu-latest #ubuntu-latest #self-hosted 
+    runs-on: blacksmith-4vcpu-ubuntu-2404 #blacksmith-4vcpu-ubuntu-2404 #self-hosted 
     name: A test job to build in a ${{ inputs.runner }} container
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
