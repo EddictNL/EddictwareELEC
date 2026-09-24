@@ -53,7 +53,7 @@ defaults:
 
 jobs:
   build:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
+    runs-on: ubuntu-latest # ${{ (inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner) || 'self-hosted' }}
     permissions:
       contents: read
       packages: write
