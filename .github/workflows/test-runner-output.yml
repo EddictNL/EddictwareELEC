@@ -20,17 +20,14 @@ defaults:
 jobs:
   runner:
     name: Output workflow runner
-    # runs-on cannot access environment context, so we have to set the logic here and then output
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-      attestations: read
-      id-token: write
     outputs:
-      runner: >-
-        ${{
-          inputs.runner == 'github' && 'ubuntu-latest' ||
-          inputs.runner == 'blacksmith' && 'blacksmith-8vcpu-ubuntu-2404' ||
-          inputs.runner
-        }}
+      runner: ${{ steps.map.outputs.runner }}
+    steps:
+      - id: map
+        run: >-
+          echo "runner=${{
+            inputs.runner == 'github' && 'ubuntu-latest' ||
+            inputs.runner == 'blacksmith' && 'blacksmith-8vcpu-ubuntu-2404' ||
+            inputs.runner
+          }}" >> "$GITHUB_OUTPUT"
