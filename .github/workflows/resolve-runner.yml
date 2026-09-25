@@ -1,0 +1,41 @@
+name: Resolve runner
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: 'Runner to resolve'
+        required: true
+        type: string
+      blacksmith-label:
+        description: 'Actual runner label to use for blacksmith'
+        required: false
+        type: string
+        default: blacksmith-2vcpu-ubuntu-2404
+      debug:
+        description: 'Debug mode'
+        type: boolean
+        default: false
+    outputs:
+      runner:
+        value: ${{ jobs.map.outputs.runner }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  map:
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.map.outputs.runner }}
+    steps:
+      - id: map
+        run: >-
+          echo "runner=${{
+            inputs.runner == 'github' && 'ubuntu-latest' ||
+            inputs.runner == 'aws' && 'self-hosted' ||
+            inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
+            inputs.runner == 'blacksmith' && inputs.blacksmith-label ||
+            inputs.runner
+          }}" >> "$GITHUB_OUTPUT"

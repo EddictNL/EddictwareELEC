@@ -46,20 +46,10 @@ env:
 
 jobs:
   resolve-runner:
-    name: Resolve workflow runner
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-      attestations: read
-      id-token: write
-    outputs:
-      runner: ${{ steps.map.outputs.runner }}
-    steps:
-      - id: map
-        uses: ./.github/actions/composite/resolve-runner
-        with:
-          runner: ${{ inputs.runner }}
+    uses: ./.github/workflows/resolve-runner.yml
+    with:
+      runner: ${{ inputs.runner }}
+      # blacksmith-label: blacksmith-8vcpu-ubuntu-2404
 
   build:
     needs: resolve-runner
