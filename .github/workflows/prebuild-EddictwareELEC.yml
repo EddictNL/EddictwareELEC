@@ -65,7 +65,7 @@ jobs:
       runner: ${{ steps.map.outputs.runner }}
     steps:
       - id: map
-        uses: ./.github/actions/resolve-runner
+        uses: ./.github/actions/composite/resolve-runner
         with:
           debug: ${{ inputs.debug }}
           runner: ${{ inputs.runner }}
