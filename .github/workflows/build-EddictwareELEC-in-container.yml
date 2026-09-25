@@ -48,8 +48,7 @@ on:
         type: boolean
         default: false
 
-run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner || 'self-hosted', inputs.os || 'noble', inputs.arch || 'aarch64', inputs.debug && '/debug' || '') }}
-# run-name: ${{ format('{0} ({1}/{2}/{3})', github.workflow, github.event_name == 'workflow_dispatch' && inputs.runner || 'self-hosted', github.event_name == 'workflow_dispatch' && inputs.os || 'noble', github.event_name == 'workflow_dispatch' && inputs.arch || 'aarch64') }}
+run-name: ${{ format('{0} ({1}/{2}/{3}{4})', github.workflow, inputs.runner, inputs.os, inputs.arch, inputs.debug && '/debug' || '') }}
 
 env:
   DEBUG: ${{ inputs.debug }}
@@ -69,22 +68,33 @@ defaults:
     shell: bash
 
 jobs:
-  debug:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
-    steps:
-      - name: Show env.DEBUG value
-        run: |
-          echo "DEBUG_VALUE=${{ env.DEBUG }}"
-          echo "DEBUG_COMPARISON=(${{ env.DEBUG }} = "true")"
-
-  init:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
+  resolve-runner:
+    name: Resolve workflow runner
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
       attestations: read
       id-token: write
-    if: github.event_name == 'workflow_dispatch' || github.actor != 'Eddict'
+    outputs:
+      runner: ${{ steps.map.outputs.runner }}
+    steps:
+      - id: map
+        uses: ./.github/actions/resolve-runner
+        with:
+          debug: ${{ inputs.debug }}
+          runner: ${{ inputs.runner }}
+          # blacksmith-label: blacksmith-8vcpu-ubuntu-2404
+
+  init:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.actor != 'Eddict' }}
+    needs: resolve-runner
+    runs-on: ${{ needs.resolve-runner.outputs.runner }}
+    permissions:
+      contents: read
+      packages: read
+      attestations: read
+      id-token: write
     # if: github.event.head_commit.author.username != 'Eddict' || github.event_name == 'workflow_dispatch'
     #   && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     env:
@@ -179,8 +189,10 @@ jobs:
           echo "BUILD_DIR=$BUILD_DIR" | tee -a $GITHUB_OUTPUT
 
   build:
-    runs-on: ${{ (inputs.runner == 'github' && 'ubuntu-latest' || (inputs.runner == 'aws' && 'self-hosted' || inputs.runner)) || 'self-hosted' }}
-    needs: init
+    needs:
+      - resolve-runner
+      - init
+    runs-on: ${{ needs.resolve-runner.outputs.runner }}
     env:
       HOST_UID: ${{ needs.init.outputs.host_uid }}
       HOST_GID: ${{ needs.init.outputs.host_gid }}
@@ -191,7 +203,11 @@ jobs:
       BUILD_DIR: ${{ needs.init.outputs.build_dir }}
     steps:
       - name: Checkout repository
+        if: ${{ inputs.runner != 'blacksmith' }}
         uses: actions/checkout@v7
+      - name: Checkout repository for blacksmith
+        if: ${{ inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/checkout@v1
 
       - &check-repo-folder # Define a reusable anchor for this step
         name: Check repo folder after checkout
@@ -226,7 +242,7 @@ jobs:
 
       - name: Check for existing build cache (self-hosted only)
         id: check-build-cache
-        if: inputs.runner == 'self-hosted' || inputs.runner == 'aws'
+        if: ${{ inputs.runner == 'self-hosted' || inputs.runner == 'aws' }}
         run: |
           # Check if all required cache dirs/files exist and are non-empty
           missing=0
@@ -244,7 +260,7 @@ jobs:
 
       - name: Restore build caches
         id: restore-build-caches
-        if: inputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true'
+        if: ${{ inputs.runner != 'self-hosted' || steps.check-build-cache.outputs.build_cache_present != 'true' }}
         uses: actions/cache@v5
         with:
           path: |
@@ -268,7 +284,7 @@ jobs:
 
       - name: Download persisted caches (artifacts) as fallback
         id: download-ccache-artifact
-        if: steps.restore-build-caches.outputs.cache-hit != 'true'
+        if: ${{ steps.restore-build-caches.outputs.cache-hit != 'true' }}
         uses: actions/download-artifact@v8
         continue-on-error: true
         with:
@@ -279,7 +295,7 @@ jobs:
 
       - name: Download persisted stamps (artifacts) as fallback
         id: download-stamps-artifact
-        if: steps.restore-build-caches.outputs.cache-hit != 'true'
+        if: ${{ steps.restore-build-caches.outputs.cache-hit != 'true' }}
         uses: actions/download-artifact@v8
         continue-on-error: true
         with:
@@ -288,7 +304,7 @@ jobs:
 
       - name: Download persisted apt cache (artifacts) as fallback
         id: download-apt-artifact
-        if: steps.restore-apt-cache.outputs.cache-hit != 'true'
+        if: ${{ steps.restore-apt-cache.outputs.cache-hit != 'true' }}
         uses: actions/download-artifact@v8
         continue-on-error: true
         with:
@@ -317,7 +333,7 @@ jobs:
 
       - name: Host diagnostics
         id: host-diagnostics
-        if: env.DEBUG == 'true'
+        if: ${{ env.DEBUG == 'true' }}
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -340,7 +356,7 @@ jobs:
 
       - name: In-container diagnostics
         id: in-container-diagnostics
-        if: env.DEBUG == 'true'
+        if: ${{ env.DEBUG == 'true' }}
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -395,7 +411,7 @@ jobs:
           '
 
       - name: Upload CI diagnostics
-        if: always() && !cancelled() && env.DEBUG == 'true'
+        if: ${{ always() && !cancelled() && env.DEBUG == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: ci-diagnostics-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -570,7 +586,7 @@ jobs:
           sudo chown -R ${{ env.HOST_UID }}:${{ env.HOST_GID }} "$TARGET_TOOLCHAIN" || true
 
       - name: Upload toolchain artifact (after population)
-        if: success() && !cancelled()
+        if: ${{ success() && !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: toolchain-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -594,7 +610,7 @@ jobs:
 
       - name: In-container diagnostics (post-prebuild)
         id: in-container-diagnostics-post
-        if: env.DEBUG == 'true'
+        if: ${{ env.DEBUG == 'true' }}
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -631,7 +647,7 @@ jobs:
 
       - name: Upload CI diagnostics (post-prebuild)
         id: upload-ci-diagnostics-post
-        if: always() && !cancelled() && env.DEBUG == 'true'
+        if: ${{ always() && !cancelled() && env.DEBUG == 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: ci-diagnostics-post-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -783,7 +799,7 @@ jobs:
 
       - name: github-workspace
         id: ls-ghws
-        if: env.DEBUG == 'true'
+        if: ${{ env.DEBUG == 'true' }}
         run: |
           [ "${{ env.DEBUG }}" = "true" ] && echo "[github.workspace]: ${{ github.workspace }}" || true
           [ "${{ env.DEBUG }}" = "true" ] && ls -al ${{ github.workspace }} || true
@@ -799,7 +815,7 @@ jobs:
       # - built image artifact (final product)
       # Keep uploads `if: always()` so fallback artifacts are refreshed.
       - uses: actions/upload-artifact@v7
-        if: always() && !cancelled() && steps.build-image.outcome == 'failure'
+        if: ${{ always() && !cancelled() && steps.build-image.outcome == 'failure' }}
         with:
           name: artifact_logs_${{ env.EE_DistroTag }}-${{ env.EE_Device }}.${{ env.EE_Arch }}
           # use workspace-relative path so the host runner (not the container) can find the logs
@@ -811,7 +827,7 @@ jobs:
           include-hidden-files: true
 
       - name: Upload ccache artifact
-        if: success() && !cancelled()
+        if: ${{ success() && !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: ccache-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -823,7 +839,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload stamps artifact
-        if: success() && !cancelled()
+        if: ${{ success() && !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: stamps-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -831,7 +847,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload apt-cache artifact
-        if: success() && !cancelled()
+        if: ${{ success() && !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: apt-${{ env.OS_Codename }}-${{ env.EE_Arch }}
@@ -868,7 +884,7 @@ jobs:
           fi
 
       - name: Upload built ${{ env.EE_DistroTag }} image
-        if: steps.image-path.outputs.EE_image_pathfilename != '' && !cancelled()
+        if: ${{ steps.image-path.outputs.EE_image_pathfilename != '' && !cancelled() }}
         uses: actions/upload-artifact@v7
         with:
           name: "${{ steps.image-path.outputs.EE_image_filename }}"

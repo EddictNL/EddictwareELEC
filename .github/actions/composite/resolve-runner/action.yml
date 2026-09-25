@@ -1,0 +1,49 @@
+name: Resolve runner
+description: Maps a runner input to its actual runs-on label
+
+inputs:
+  runner:
+    description: 'Runner to resolve'
+    required: true
+  blacksmith-label:
+    description: 'Actual runner label to use for blacksmith'
+    required: false
+    default: blacksmith-4vcpu-ubuntu-2404
+  debug:
+    description: 'Enable debug build'
+    required: true
+    type: boolean
+    default: false
+
+outputs:
+  runner:
+    description: 'Resolved runner label'
+    value: ${{ steps.map.outputs.runner }}
+
+runs:
+  using: composite
+  steps:
+    - id: map
+      shell: bash
+      run: >-
+        echo "runner=${{
+          inputs.runner == 'github' && 'ubuntu-latest' ||
+          inputs.runner == 'aws' && 'self-hosted' ||
+          inputs.runner == 'arc-runner-set' && 'arc-runner-set' ||
+          inputs.runner == 'blacksmith' && inputs.blacksmith-label ||
+          inputs.runner
+        }}" >> "$GITHUB_OUTPUT"
+
+    - name: echo the runner details
+      id: echo_runner
+      shell: bash
+      run: |
+        # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
+        echo "inputs.runner: ${{ inputs.runner }}"
+        echo "runner.name: ${{ runner.name }}"
+        echo "runner.os: ${{ runner.os }}"
+        echo "runner.arch: ${{ runner.arch }}"
+        echo "runner.temp: ${{ runner.temp }}"
+        echo "runner.tool_cache: ${{ runner.tool_cache }}"
+        echo "runner.debug: ${{ runner.debug }}"
+        echo "runner.environment: ${{ runner.environment }}"

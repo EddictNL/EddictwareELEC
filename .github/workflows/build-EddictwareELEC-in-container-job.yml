@@ -64,45 +64,27 @@ defaults:
     shell: bash
 
 jobs:
-  runner:
-    name: Set workflow runner
-    if: ${{ always() }}
-    runs-on: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+  resolve-runner:
+    name: Resolve workflow runner
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: read
       attestations: read
       id-token: write
     outputs:
-      # runner: ${{ steps.echo_runner.outputs.WF_RUNNER }}
-      runner: ${{ inputs.runner == 'github' && 'ubuntu-latest' || inputs.runner }}
+      runner: ${{ steps.map.outputs.runner }}
     steps:
-      - name: echo the runner
-        id: echo_runner
-        if: ${{ 0 == 1 }}
-        run: |
-          debug=false
-          # https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#runner-context
-          [ "$debug" = true ] && echo "runner.name: ${{ runner.name }}"
-          [ "$debug" = true ] && echo "runner.os: ${{ runner.os }}"
-          [ "$debug" = true ] && echo "runner.arch: ${{ runner.arch }}"
-          [ "$debug" = true ] && echo "runner.temp: ${{ runner.temp }}"
-          [ "$debug" = true ] && echo "runner.tool_cache: ${{ runner.tool_cache }}"
-          [ "$debug" = true ] && echo "runner.debug: ${{ runner.debug }}"
-          [ "$debug" = true ] && echo "runner.environment: ${{ runner.environment }}"
-          # WF_RUNNER="${{ format('[{0}, {1}]', runner.environment, runner.name) }}"
-          # [ "$debug" = true ] && echo "WF_RUNNER=$WF_RUNNER" | sudo tee -a $GITHUB_OUTPUT
-          # [ "$debug" = true ] && echo "selected runner: $WF_RUNNER"
-          [ "$debug" = true ] && echo "selected runner: ${{ runner.environment }}"
-        # runner: ${{ runner.name }}
-        # runner: ${{ format('[{0}, {1}]', runner.environment, runner.name) }}
-        # runner: [self-hosted, "${{ inputs.chosen-os }}"]
+      - id: map
+        uses: ./.github/actions/resolve-runner
+        with:
+          runner: ${{ inputs.runner }}
 
   pre-build:
     name: Pre-build
-    needs: runner
-    runs-on: ${{ needs.runner.outputs.runner }}
-    if: github.event_name == 'workflow_dispatch' || github.actor != 'Eddict'
+    needs: resolve-runner
+    runs-on: ${{ needs.resolve-runner.outputs.runner }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.actor != 'Eddict' }}
     #    if: ${{ github.event.head_commit.author.username != github.repository_owner || github.event.head_commit.message == 'Merge branch ''LibreELEC:master'' into master' || github.event_name == 'workflow_dispatch' }}
       # && github.event_name != 'pull_request' && github.event_name != 'workflow_dispatch'
     permissions:
@@ -122,6 +104,7 @@ jobs:
       output_meta_tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout repository scripts
+        if: ${{ inputs.runner != 'blacksmith' }}
         uses: actions/checkout@v7
         with:
           ref: ${{ github.event.repository.default_branch }}
@@ -135,6 +118,18 @@ jobs:
   #        sparse-checkout-cone-mode: false
   #        path: .
   #        filter: .github/actions/scripts
+      - name: Checkout repository scripts
+        if: ${{ inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/checkout@v1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: ${{ github.workspace }}
+          clean: false
+          show-progress: false
+          set-safe-directory: true
+          sparse-checkout: |
+            .github/actions/composite
+            .github/actions/scripts
 
       - name: Initialize environment
         id: set-multi
@@ -143,7 +138,17 @@ jobs:
           .github/actions/scripts/set_multi.sh
 
       - name: Checkout repository
+        if: ${{ inputs.runner != 'blacksmith' }}
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: ${{ github.workspace }}
+          sparse-checkout-cone-mode: true
+          clean: true
+          fetch-depth: 1
+      - name: Checkout repository
+        if: ${{ inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/checkout@v1
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: ${{ github.workspace }}
@@ -231,16 +236,16 @@ jobs:
 
   build:
     name: Build
-    runs-on: ${{ needs.runner.outputs.runner }}
+    needs:
+      - resolve-runner
+      - pre-build
+    runs-on: ${{ needs.resolve-runner.outputs.runner }}
     permissions:
       actions: write
       contents: read
       packages: read
       attestations: read
       id-token: write
-    needs:
-      - runner
-      - pre-build
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       HOME: ""
@@ -287,7 +292,14 @@ jobs:
 
     steps:
       - name: Checkout repository
+        if: ${{ inputs.runner != 'blacksmith' }}
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: ${{ github.workspace }}
+      - name: Checkout repository for blacksmith
+        if: ${{ inputs.runner == 'blacksmith' }}
+        uses: useblacksmith/checkout@v1
         with:
           ref: ${{ github.event.repository.default_branch }}
           path: ${{ github.workspace }}
@@ -334,10 +346,10 @@ jobs:
 
   post-build:
     name: Post-build
-    runs-on: ${{ needs.runner.outputs.runner }}
     needs:
-      - runner 
+      - resolve-runner
       - build
+    runs-on: ${{ needs.resolve-runner.outputs.runner }}
     steps:
       - name: Copy built ${{ env.EE_Distro }} image to archive
         id: archive-image
